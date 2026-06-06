@@ -1,0 +1,21 @@
+image: ubuntu:22.04
+
+stages:
+  - downloading
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+
+load_image:
+  stage: downloading
+  before_script:
+    - apt-get update
+    - apt install curl -y
+    - curl https://dl.min.io/client/mc/release/linux-amd64/mc --create-dirs -o $HOME/minio-binaries/mc
+    - chmod +x $HOME/minio-binaries/mc
+    - export PATH=$PATH:$HOME/minio-binaries/
+  script:
+    - mc alias set myminio $MINIO_URL $ACCESS_KEY $SECRET_KEY
+    - mc cp myminio/$BUCKET_NAME/$FILE_PATH $LOCAL_PATH
+    - echo "$HASH_STRING $LOCAL_PATH" | md5sum -c
